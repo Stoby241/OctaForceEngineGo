@@ -62,12 +62,12 @@ func start() {
 
 	mesh := of.NewMesh()
 	mesh.LoadOBJ(absPath+"/mesh/LowPolySphere.obj", false)
-	mesh.Material = of.Material{DiffuseColor: [3]float32{1, 1, 1}}
+	mesh.Material = &of.Material{DiffuseColor: [3]float32{1, 1, 1}}
 	of.GetActiveMeshes().AddMesh(mesh)
 
 	for i := 0; i < 1000; i++ {
 		var instants []*of.MeshInstant
-		for j := 0; j < 500; j++ {
+		for j := 0; j < 1000; j++ {
 			meshInstant := of.NewMeshInstant(mesh, &of.Material{DiffuseColor: [3]float32{1, 0, 1}})
 			meshInstant.Transform.SetPosition(mgl32.Vec3{float32(i) * 10, float32(j) * 10, 0})
 			instants = append(instants, meshInstant)
