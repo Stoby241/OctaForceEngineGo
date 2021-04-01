@@ -22,6 +22,7 @@ func Init(gameStartFunc func()) {
 	initState()
 	initActiveMeshesData()
 	initActiveCamera()
+	initWorker()
 	initDispatcher()
 
 	initRender()

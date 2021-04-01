@@ -3,6 +3,7 @@ package OctaForce
 import (
 	"fmt"
 	"github.com/inkyblackness/imgui-go"
+	"log"
 	"path/filepath"
 	"runtime"
 	"time"
@@ -18,7 +19,10 @@ func init() {
 func initRender() {
 	initImGui()
 
+	log.Print("test")
+
 	initGLFW()
+	log.Print("test")
 	initImGuiKeyMapping()
 
 	initOpenGL()
