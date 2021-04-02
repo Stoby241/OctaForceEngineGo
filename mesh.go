@@ -5,7 +5,6 @@ import (
 	"log"
 	"strings"
 
-	"github.com/go-gl/gl/v4.1-core/gl"
 	"github.com/go-gl/mathgl/mgl32"
 )
 
@@ -19,12 +18,11 @@ type vertex struct {
 // When you change Vertices or Indices buy your self don't forget to set needsVertexUpdate to true. Otherwise the changes
 // will not be applied.
 type Mesh struct {
-	Vertices          []vertex
-	Indices           []uint32
-	vao               uint32
-	vertexVBO         uint32
-	needsVertexUpdate bool
-
+	Vertices             []vertex
+	Indices              []uint32
+	vao                  uint32
+	vertexVBO            uint32
+	needsVertexUpdate    bool
 	ebo                  uint32
 	transformVBO         uint32
 	needsTransformUpdate bool
@@ -35,10 +33,15 @@ type Mesh struct {
 	instanceTransforms []float32
 
 	Transform *Transform
+
+	visable bool
 }
 
 func NewMesh() *Mesh {
-	return &Mesh{Transform: NewTransform()}
+	return &Mesh{
+		Transform:            NewTransform(),
+		needsTransformUpdate: true,
+	}
 }
 
 // LoadOBJ returns the Mesh struct of the given OBJ file.
@@ -103,31 +106,10 @@ func (m *Mesh) LoadOBJ(path string, loadMaterials bool) {
 	m.needsVertexUpdate = true
 }
 
-type activeMeshesData struct {
-	meshes []*Mesh
-}
-
-func initActiveMeshesData() {
-	globalActiveMeshesData = &activeMeshesData{}
-}
-
-var globalActiveMeshesData *activeMeshesData
-
-func GetActiveMeshes() *activeMeshesData {
-	return globalActiveMeshesData
-}
-
-func (a *activeMeshesData) AddMesh(mesh *Mesh) {
-	gl.GenVertexArrays(1, &mesh.vao)
-	a.meshes = append(a.meshes, mesh)
-}
-func (a *activeMeshesData) RemoveMesh(mesh *Mesh) {
-
-	for i := len(a.meshes) - 1; i >= 0; i-- {
-		if a.meshes[i] == mesh {
-			a.meshes = append(a.meshes[:i], a.meshes[i+1:]...)
-		}
+func (m *Mesh) Visable(value bool) {
+	if value && !m.visable {
+		m.Material.getBase().addMesh(m)
+	} else if !value && m.visable {
+		m.Material.getBase().removeMesh(m)
 	}
-
-	//unUsedVAOs = append(unUsedVAOs, mesh.vao)
 }

@@ -140,6 +140,7 @@ func dispatchTasks() {
 			if canStartTask(task) {
 				workerTasks <- task
 				aktiveTasks = append(aktiveTasks, task)
+				tasks = append(tasks[:i], tasks[i+1:]...)
 			}
 		}
 	}

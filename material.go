@@ -1,38 +1,77 @@
 package OctaForce
 
 import (
+	"fmt"
 	"github.com/go-gl/gl/v4.1-core/gl"
 	"github.com/go-gl/mathgl/mgl32"
+	"strings"
 )
 
 type IMaterial interface {
+	getBase() *materialBase
 	render()
+}
+
+var materialBases []*materialBase
+
+func initMaterials() {
+	materialBases = []*materialBase{
+		newMaterialBase(2, 3),
+	}
 }
 
 // Material is a Struct with is needed by the Mesh Component to set the Color of an Mesh.
 type materialBase struct {
-	vertexShader   *Shader
-	fragmentShader *Shader
-	programm       uint32
-
-	meshes []*Mesh
+	programm uint32
+	meshes   []*Mesh
 }
 
-type MaterialSimple struct {
-	materialBase
-	Color mgl32.Vec4
+func newMaterialBase(vertexIndex int, fragmentIndex int) *materialBase {
+	base := &materialBase{}
+
+	base.programm = gl.CreateProgram()
+	gl.BindFragDataLocation(base.programm, 0, gl.Str("outputColor\x00"))
+
+	gl.AttachShader(base.programm, shaders[vertexIndex])
+	gl.AttachShader(base.programm, shaders[fragmentIndex])
+
+	gl.LinkProgram(base.programm)
+	var status int32
+	gl.GetProgramiv(base.programm, gl.LINK_STATUS, &status)
+	if status == gl.FALSE {
+		var logLength int32
+		gl.GetProgramiv(base.programm, gl.INFO_LOG_LENGTH, &logLength)
+
+		log := strings.Repeat("\x00", int(logLength+1))
+		gl.GetProgramInfoLog(base.programm, logLength, nil, gl.Str(log))
+
+		panic(fmt.Errorf("failed to link program: %v", log))
+	}
+
+	return base
 }
 
-func NewMaterialSimple(color mgl32.Vec4) *MaterialSimple {
-	return &MaterialSimple{Color: color}
+func (base *materialBase) getBase() *materialBase {
+	return base
+}
+func (base *materialBase) addMesh(mesh *Mesh) {
+	base.meshes = append(base.meshes, mesh)
+}
+func (base *materialBase) removeMesh(mesh *Mesh) {
+	for i, testMesh := range base.meshes {
+		if testMesh == mesh {
+			base.meshes = append(base.meshes[:i], base.meshes[i+1:]...)
+			break
+		}
+	}
 }
 
-func (m *MaterialSimple) render() {
-	gl.UseProgram(m.programm)
+func (base *materialBase) renderBase() {
+	gl.UseProgram(base.programm)
 
-	gl.Uniform3f(2, m.Color[0], m.Color[1], m.Color[2])
+	for _, mesh := range base.meshes {
+		mesh.Material.render()
 
-	for _, mesh := range globalActiveMeshesData.meshes {
 		gl.BindVertexArray(mesh.vao)
 
 		if mesh.needsVertexUpdate {
@@ -40,11 +79,12 @@ func (m *MaterialSimple) render() {
 		}
 
 		if len(mesh.instances) == 0 {
-			pushTransformData(mesh)
-			gl.DrawElements(gl.TRIANGLES, int32(len(mesh.Indices)), gl.UNSIGNED_INT, nil)
+			matrix := mesh.Transform.getMatrix()
+			gl.UniformMatrix4fv(3, 1, false, &matrix[0])
 
+			gl.DrawElements(gl.TRIANGLES, int32(len(mesh.Indices)), gl.UNSIGNED_INT, nil)
 		} else {
-			pushTransformDataInstanced(mesh)
+			pushTransformData(mesh)
 			gl.DrawElementsInstanced(gl.TRIANGLES, int32(len(mesh.Indices)), gl.UNSIGNED_INT, nil, int32(len(mesh.instances)+1))
 		}
 	}
@@ -80,32 +120,6 @@ func pushVertexData(mesh *Mesh) {
 }
 
 func pushTransformData(mesh *Mesh) {
-	if mesh.needsTransformUpdate {
-		gl.GenBuffers(1, &mesh.transformVBO)
-		gl.BindBuffer(gl.ARRAY_BUFFER, mesh.transformVBO)
-		gl.BufferData(gl.ARRAY_BUFFER, transformStride, gl.Ptr(nil), gl.DYNAMIC_DRAW)
-
-		gl.EnableVertexAttribArray(1)
-		gl.VertexAttribPointer(1, 4, gl.FLOAT, false, int32(transformStride), gl.PtrOffset(0))
-		gl.VertexAttribDivisor(1, 1)
-
-		gl.EnableVertexAttribArray(2)
-		gl.VertexAttribPointer(2, 4, gl.FLOAT, false, int32(transformStride), gl.PtrOffset(3*4))
-		gl.VertexAttribDivisor(2, 1)
-
-		gl.EnableVertexAttribArray(3)
-		gl.VertexAttribPointer(3, 4, gl.FLOAT, false, int32(transformStride), gl.PtrOffset(7*4))
-		gl.VertexAttribDivisor(3, 1)
-
-		gl.EnableVertexAttribArray(4)
-		gl.VertexAttribPointer(4, 4, gl.FLOAT, false, int32(transformStride), gl.PtrOffset(11*4))
-		gl.VertexAttribDivisor(4, 1)
-
-		mesh.needsTransformUpdate = false
-	}
-	gl.BufferData(gl.ARRAY_BUFFER, transformStride, gl.Ptr(mesh.Transform.matrix), gl.DYNAMIC_DRAW)
-}
-func pushTransformDataInstanced(mesh *Mesh) {
 	if mesh.needsTransformUpdate {
 		gl.GenBuffers(1, &mesh.transformVBO)
 		gl.BindBuffer(gl.ARRAY_BUFFER, mesh.transformVBO)
@@ -177,4 +191,19 @@ func pushTransformDataInstanced(mesh *Mesh) {
 	}
 
 	gl.BufferData(gl.ARRAY_BUFFER, (len(mesh.instances)+1)*transformStride, gl.Ptr(mesh.instanceTransforms), gl.DYNAMIC_DRAW)
+}
+
+type MaterialSimple struct {
+	*materialBase
+	Color mgl32.Vec4
+}
+
+func NewMaterialSimple(color mgl32.Vec4) *MaterialSimple {
+	return &MaterialSimple{
+		materialBase: materialBases[0],
+		Color:        color,
+	}
+}
+func (m *MaterialSimple) render() {
+	gl.Uniform3f(2, m.Color[0], m.Color[1], m.Color[2])
 }

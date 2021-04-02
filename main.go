@@ -2,14 +2,24 @@ package OctaForce
 
 import (
 	"log"
+	"path/filepath"
 	"runtime"
 )
+
+var absPath string
+
+func init() {
+	_, b, _, _ := runtime.Caller(0)
+	absPath = filepath.Dir(b)
+}
 
 var stopFunc func()
 
 func SetStopFunc(function func()) {
 	stopFunc = function
 }
+
+var debug bool
 
 func Init(gameStartFunc func()) {
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
@@ -20,7 +30,6 @@ func Init(gameStartFunc func()) {
 	running = true
 
 	initState()
-	initActiveMeshesData()
 	initActiveCamera()
 	initWorker()
 	initDispatcher()
