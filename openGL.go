@@ -71,11 +71,14 @@ func initOpenGL() {
 		programmDatas[i] = programmData
 	}
 
+	gl.DepthFunc(gl.LESS)
+	gl.Enable(gl.DEPTH_TEST)
+
 }
 
 func preRender(clearColor [3]float32) {
 	gl.ClearColor(clearColor[0], clearColor[1], clearColor[2], 1.0)
-	gl.Clear(gl.COLOR_BUFFER_BIT)
+	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 }
 
 func renderImGui(displaySize [2]float32, framebufferSize [2]float32, drawData imgui.DrawData) {
