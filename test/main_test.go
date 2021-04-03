@@ -57,24 +57,25 @@ func start() {
 		}
 	})
 	task.SetRepeating(true)
-	task.SetRaceTask(of.GetEngineTask(of.WindowUpdateTask), of.GetEngineTask(of.RenderTask))
 	of.AddTask(task)
 
 	mesh := of.NewMesh()
 	mesh.LoadOBJ(absPath+"/mesh/LowPolySphere.obj", false)
-	mesh.Material = of.Material{DiffuseColor: [3]float32{1, 1, 1}}
-	of.GetActiveMeshes().AddMesh(mesh)
+	mesh.Material = of.NewMaterialSimple(mgl32.Vec4{1, 1, 1, 1})
+	mesh.Visable(true)
 
-	for i := 0; i < 1000; i++ {
-		var instants []*of.MeshInstant
-		for j := 0; j < 500; j++ {
-			meshInstant := of.NewMeshInstant(mesh, &of.Material{DiffuseColor: [3]float32{1, 0, 1}})
-			meshInstant.Transform.SetPosition(mgl32.Vec3{float32(i) * 10, float32(j) * 10, 0})
-			instants = append(instants, meshInstant)
+	/*
+		for i := 0; i < 1000; i++ {
+			var instants []*of.MeshInstant
+			for j := 0; j < 500; j++ {
+				meshInstant := of.NewMeshInstant(mesh)
+				meshInstant.Transform.SetPosition(mgl32.Vec3{float32(i) * 10, float32(j) * 10, 0})
+				instants = append(instants, meshInstant)
+			}
+
+			newTask(instants)
 		}
-
-		newTask(instants)
-	}
+	*/
 }
 
 func newTask(instants []*of.MeshInstant) {
@@ -85,11 +86,6 @@ func newTask(instants []*of.MeshInstant) {
 		}
 	})
 	task.SetRepeating(true)
-	dependices := make([]of.Data, len(instants))
-	for i, instant := range instants {
-		dependices[i] = instant
-	}
-	task.SetRaceTask(of.GetEngineTask(of.RenderTask))
 	of.AddTask(task)
 }
 

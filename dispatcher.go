@@ -59,7 +59,6 @@ func runDispatcher() {
 var addTask chan *task
 
 func AddTask(task *task) {
-	go task.run()
 	addTask <- task
 }
 
@@ -139,12 +138,9 @@ func dispatchTasks() {
 			done = false
 			task := tasks[i]
 			if canStartTask(task) {
-				select {
-				case task.start <- true:
-					tasks = append(tasks[:i], tasks[i+1:]...)
-					aktiveTasks = append(aktiveTasks, task)
-				default:
-				}
+				workerTasks <- task
+				aktiveTasks = append(aktiveTasks, task)
+				tasks = append(tasks[:i], tasks[i+1:]...)
 			}
 		}
 	}
