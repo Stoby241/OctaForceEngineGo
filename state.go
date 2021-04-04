@@ -5,9 +5,7 @@ type Data interface{}
 type taskTyp int
 
 const (
-	RenderTask       taskTyp = 0
-	WindowUpdateTask taskTyp = 1
-	taskMax                  = 2
+	taskMax = 0
 )
 
 var engineTasks []*task

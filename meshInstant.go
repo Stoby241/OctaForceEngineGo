@@ -3,20 +3,18 @@ package OctaForce
 // MeshInstant is a Component that creates an Instant of the Mesh Component of MeshEntity.
 // Transform and Material are individual changeable.
 type MeshInstant struct {
-	mesh     *Mesh
-	Material *Material
+	mesh *Mesh
 
 	Transform *Transform
 }
 
-func NewMeshInstant(mesh *Mesh, material *Material) *MeshInstant {
+func NewMeshInstant(mesh *Mesh) *MeshInstant {
 	meshInstant := &MeshInstant{
 		mesh:      mesh,
-		Material:  material,
 		Transform: NewTransform(),
 	}
 	mesh.instances = append(mesh.instances, meshInstant)
-	mesh.needsInstanceUpdate = true
+	mesh.needsTransformUpdate = true
 	return meshInstant
 }
 
@@ -27,5 +25,5 @@ func (m *MeshInstant) Delete() {
 			mesh.instances = append(mesh.instances[:i], mesh.instances[i+1:]...)
 		}
 	}
-	mesh.needsInstanceUpdate = true
+	mesh.needsTransformUpdate = true
 }

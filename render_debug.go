@@ -1,23 +1,16 @@
-// +build !debug
+// +build debug
 
 package OctaForce
 
 import (
-	"fmt"
-	"github.com/inkyblackness/imgui-go"
 	"time"
 )
 
 func initRender() {
-	initImGui()
-
 	initGLFW()
-	initImGuiKeyMapping()
 
 	initOpenGL()
 	initShaders()
-
-	initImGuiGLBuffers()
 
 	initMaterials()
 
@@ -29,12 +22,7 @@ var (
 	fps              float64
 	renderFrameStart time.Time
 	renderDeltaTime  float64
-	imGuiFunc        func()
 )
-
-func SetImGuiFunc(function func()) {
-	imGuiFunc = function
-}
 
 func runRender() {
 
@@ -50,22 +38,8 @@ func runRender() {
 			running = false
 		}
 
-		newImGuiFrame()
-		imgui.NewFrame()
-
-		imgui.Text(fmt.Sprintf("FPS : %.0f", fps))
-		imgui.Text(fmt.Sprintf("UPS : %.0f", ups))
-
-		if imGuiFunc != nil {
-			imGuiFunc()
-		}
-
-		imgui.Render()
-
 		preRender(clearColor)
-
 		render3D()
-		renderImGui(DisplaySize(), FramebufferSize(), imgui.RenderedDrawData())
 		postRender()
 
 		diff := time.Since(renderFrameStart)
